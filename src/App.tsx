@@ -8,6 +8,8 @@ import './App.css';
  */
 interface IState {
   data: ServerRespond[],
+  // adding graph property to show live graph in app component
+  showGraph: boolean,
 }
 
 /**
@@ -22,6 +24,8 @@ class App extends Component<{}, IState> {
       // data saves the server responds.
       // We use this state to parse data down to the child element (Graph) as element property
       data: [],
+      // initiating showGraph as false until the user clicks start streaming data
+      showGraph: false,
     };
   }
 
@@ -29,18 +33,32 @@ class App extends Component<{}, IState> {
    * Render Graph react component with state.data parse as property data
    */
   renderGraph() {
-    return (<Graph data={this.state.data}/>)
+    // adding condition so graph only shows when showGraph is true
+    // meaning it'll ensure it only shows once user clicks Start Streaming Data
+    if (this.state.showGraph) {
+        return (<Graph data={this.state.data}/>)
+    }
   }
 
   /**
    * Get new data from server and update the state with the new data
    */
   getDataFromServer() {
-    DataStreamer.getData((serverResponds: ServerRespond[]) => {
-      // Update the state by creating a new array of data that consists of
-      // Previous data in the state and the new data from server
-      this.setState({ data: [...this.state.data, ...serverResponds] });
-    });
+    let x = 0;
+    const interval = setInterval(() => {
+        DataStreamer.getData((serverResponds: ServerRespond[]) => {
+            // Update the state by creating a new array of data that consists of
+            // Previous data in the state and the new data from server
+            this.setState({
+                data: serverResponds,
+                showGraph: true,
+            });
+        });
+        x++;
+        if (x > 1000) {
+            clearInterval(interval);
+        }
+    }, 100);
   }
 
   /**
